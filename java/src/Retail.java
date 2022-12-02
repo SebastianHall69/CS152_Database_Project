@@ -477,9 +477,31 @@ public class Retail {
          System.err.println(e.getMessage());
       }
 
-
    }
-    public static void placeOrder(Retail esql) {}
+
+
+    public static void placeOrder(Retail esql)
+    {
+        int storeID = 5;
+        String productName = 'Pudding'; 
+        int numberOfUnits = 3;
+        //check if there is enough quantity available 
+        try{
+            String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %s and productName = %s", storeID, productName);
+            List<List<String>> result = esql.executeQueryAndReturnResult(query);
+            if(result.size() > 0)
+            {
+                System.out.print(result)
+            }
+
+
+        }catch(Exception e){
+            System.err.println(e.getMessage());
+        }
+
+    }
+
+
     public static void viewRecentOrders(Retail esql) {}
     public static void updateProduct(Retail esql) {}
     public static void viewRecentUpdates(Retail esql) {}
