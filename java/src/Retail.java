@@ -482,7 +482,7 @@ public class Retail {
     public static void placeOrder(Retail esql)
     {
         int storeID = 5;
-        String productName = 'Pudding'; 
+        String productName = "Pudding"; 
         int numberOfUnits = 3;
         //check if there is enough quantity available 
         try{
@@ -490,7 +490,7 @@ public class Retail {
             List<List<String>> result = esql.executeQueryAndReturnResult(query);
             if(result.size() > 0)
             {
-                System.out.print(result)
+                System.out.print(result);
             }
 
 
