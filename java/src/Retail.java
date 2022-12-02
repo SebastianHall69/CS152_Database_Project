@@ -471,7 +471,7 @@ public class Retail {
       try{
          String query = String.format("SELECT * FROM Product WHERE storeID = %s", storeID);
          List<List<String>> result = esql.executeQueryAndReturnResult(query);
-         System.out.print(result);
+         System.out.println(result);
       }catch(Exception e){
          System.err.println(e.getMessage());
       }
@@ -479,29 +479,55 @@ public class Retail {
    }
 
 
+    //check if the user is within 30 miles
     public static void placeOrder(Retail esql)
     {
         int storeID = 5;
-        String productName = 'Pudding'; 
-        int numberOfUnits = 3;
+        String productName = "Pudding"; 
+        int unitsOrdered = 3;
         //check if there is enough quantity available 
         try{
-            String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %s and productName = %s", storeID, productName);
+            String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
             List<List<String>> result = esql.executeQueryAndReturnResult(query);
             if(result.size() > 0)
             {
-                System.out.print(result)
+                int quantity_available = Integer.parseInt(result.get(0).get(0));
+
+                if(unitsOrdered <= quantity_available)
+                {
+                    quantity_available -= unitsOrdered;
+                    //submit the order
+                    query = String.format("INSERT INTO Orders(customerID, storeID, productName, unitsOrdered) VALUES (%d, %d, '%s', %d)", esql.current_user.userid(), storeID, productName, unitsOrdered);
+                    esql.executeUpdate(query);
+                    //update product quantity
+                    query = String.format("UPDATE Product SET numberOfUnits = %d WHERE storeID = %d AND productName = '%s'", quantity_available, storeID, productName);
+                    esql.executeUpdate(query);
+                    query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
+                    esql.executeQuery(query);
+                }
             }
 
 
         }catch(Exception e){
             System.err.println(e.getMessage());
+
         }
 
     }
 
 
-    public static void viewRecentOrders(Retail esql) {}
+    public static void viewRecentOrders(Retail esql) 
+    {
+        try{
+            String query = String.format("SELECT * FROM Orders WHERE customerID = %s ORDER BY orderTime DESC LIMIT 5", esql.current_user.userid());
+            List<List<String>> result = esql.executeQueryAndReturnResult(query);
+            System.out.println(result);
+
+        }catch(Exception e){
+            System.err.println(e.getMessage());
+        }
+    }
+
     public static void updateProduct(Retail esql) {}
     public static void viewRecentUpdates(Retail esql) {}
     public static void viewPopularProducts(Retail esql) {}
