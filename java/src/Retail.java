@@ -412,14 +412,73 @@ public class Retail {
     }//end
 
     // Rest of the functions definition go in here
+	/* Maybe combine Stores and Product list.
+      After logging in initial, find the closest store and display the products at that given store
+      Add a function to change the current store and use viewStores to give the user options
+    */
+   //View Stores within 30 miles
+   public static List<List<String>> getClosestStores(Retail esql, double user_lat, double user_long)
+   {
+      try{
+         String query = String.format("SELECT * FROM Store");
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+         //System.out.print(result);
+         List<List<String>> in_range_result = new ArrayList<List<String>>(); 
 
-    public static void viewStores(Retail esql) {
-        //String query = "SELECT 
+         for(List<String> i:result)
+         {
+            double store_lat = Double.parseDouble(i.get(2));
+            double store_long = Double.parseDouble(i.get(3));
+            double distance = esql.calculateDistance(store_lat, store_long, user_lat, user_long);
+            if(distance < 30.0)
+            {
+               List<String> record = i;
+               record.add(String.valueOf(distance));
+               in_range_result.add(record);
+            }
+         }
+         //System.out.print(in_range_result);
+         //maybe sort the distances before returning
+         /*Collections.sort(in_range_result, (result_1, result_2) -> {
+            return Integer.parseInt(result_1.get(6)) - Integer.parseInt(result_2.get(6));
+         });*/
+         return in_range_result;
+      }catch(Exception e){
+         System.err.println(e.getMessage());
+         return null;
+      }
 
 
-        //esql.executeQueryAndPrintResult();
-    }
-    public static void viewProducts(Retail esql) {}
+   }
+   //add a user parameter
+   public static void viewStores(Retail esql)
+   {
+      double user_lat = 42.96338;
+      double user_long = 58.46449;
+      List<List<String>> closest_store = getClosestStores(esql, user_lat, user_long);
+      System.out.print("Stores located within 30 miles:\n");
+      for(List<String> i:closest_store)
+      {
+         System.out.println("Store ID: " + i.get(0));
+         System.out.println("Store Name: " + i.get(1));
+         System.out.println("Distance Away: " + i.get(6) + " miles");
+      }
+   }
+	//View Product List, needs store id
+   public static void viewProducts(Retail esql)
+   {
+      //return view of all items in the given store
+      int storeID = 5;
+      try{
+         String query = String.format("SELECT * FROM Product WHERE storeID = %s", storeID);
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+         System.out.print(result);
+      }catch(Exception e){
+         System.err.println(e.getMessage());
+      }
+
+
+   }
     public static void placeOrder(Retail esql) {}
     public static void viewRecentOrders(Retail esql) {}
     public static void updateProduct(Retail esql) {}
