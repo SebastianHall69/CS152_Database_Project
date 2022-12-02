@@ -40,6 +40,9 @@ public class Retail {
     static BufferedReader in = new BufferedReader(
             new InputStreamReader(System.in));
 
+	// Current signed in user
+	public User current_user = null;
+
     /**
      * Creates a new instance of Retail shop
      *
@@ -239,6 +242,7 @@ public class Retail {
                     "java [-classpath <classpath>] " +
                     Retail.class.getName () +
                     " <dbname> <port> <user>");
+			System.err.println("num args: " + args.length);
             return;
         }//end if
 
@@ -262,14 +266,13 @@ public class Retail {
                 System.out.println("1. Create user");
                 System.out.println("2. Log in");
                 System.out.println("9. < EXIT");
-                User authorisedUser = null;
                 switch (readChoice()){
                     case 1: CreateUser(esql); break;
-                    case 2: authorisedUser = LogIn(esql); break;
+                    case 2: LogIn(esql); break;
                     case 9: keepon = false; break;
                     default : System.out.println("Unrecognized choice!"); break;
                 }//end switch
-                if (authorisedUser != null) {
+                if (esql.current_user != null) {
                     boolean usermenu = true;
                     while(usermenu) {
                         System.out.println("MAIN MENU");
@@ -299,7 +302,7 @@ public class Retail {
                             case 8: viewPopularCustomers(esql); break;
                             case 9: placeProductSupplyRequests(esql); break;
 
-                            case 20: usermenu = false; break;
+                            case 20: usermenu = false; esql.current_user = null; break;
                             default : System.out.println("Unrecognized choice!"); break;
                         }
                     }
@@ -384,7 +387,7 @@ public class Retail {
      * Check log in credentials for an existing user
      * @return User login or null is the user does not exist
      **/
-    public static User LogIn(Retail esql){
+    public static void LogIn(Retail esql){
         try{
             System.out.print("\tEnter name: ");
             String name = in.readLine();
@@ -393,21 +396,17 @@ public class Retail {
 
             String query = String.format("SELECT userid, type, latitude, longitude FROM USERS WHERE name = '%s' AND password = '%s'", name, password);
             List<List<String>> user_data = esql.executeQueryAndReturnResult(query);
-			User user = null;
 
 			if(user_data.size() > 0) {
-				user = new User();
-				user.setName(name);
-				user.setUserid(Integer.parseInt(user_data.get(0).get(0)));
-				user.setType(user_data.get(0).get(1));
-				user.setLatitude(Double.parseDouble(user_data.get(0).get(2)));
-				user.setLongitude(Double.parseDouble(user_data.get(0).get(3)));
+				esql.current_user = new User();
+				esql.current_user.setName(name);
+				esql.current_user.setUserid(Integer.parseInt(user_data.get(0).get(0)));
+				esql.current_user.setType(user_data.get(0).get(1));
+				esql.current_user.setLatitude(Double.parseDouble(user_data.get(0).get(2)));
+				esql.current_user.setLongitude(Double.parseDouble(user_data.get(0).get(3)));
 			}
-
-			return user;
         }catch(Exception e){
             System.err.println (e.getMessage ());
-            return null;
         }
     }//end
 
