@@ -416,7 +416,7 @@ public class Retail {
       Add a function to change the current store and use viewStores to give the user options
     */
    //View Stores within 30 miles
-   public static List<List<String>> getClosestStores(Retail esql, double user_lat, double user_long)
+   public static List<List<String>> getClosestStores(Retail esql)
    {
       try{
          String query = String.format("SELECT * FROM Store");
@@ -428,8 +428,10 @@ public class Retail {
          {
             double store_lat = Double.parseDouble(i.get(2));
             double store_long = Double.parseDouble(i.get(3));
+            double user_lat = esql.current_user.latitude();
+            double user_long = esql.current_user.longitude();
             double distance = esql.calculateDistance(store_lat, store_long, user_lat, user_long);
-            if(distance < 30.0)
+            if(distance <= 30.0)
             {
                List<String> record = i;
                record.add(String.valueOf(distance));
@@ -452,9 +454,7 @@ public class Retail {
    //add a user parameter
    public static void viewStores(Retail esql)
    {
-      double user_lat = 42.96338;
-      double user_long = 58.46449;
-      List<List<String>> closest_store = getClosestStores(esql, user_lat, user_long);
+      List<List<String>> closest_store = getClosestStores(esql);
       System.out.print("Stores located within 30 miles:\n");
       for(List<String> i:closest_store)
       {
@@ -479,33 +479,75 @@ public class Retail {
    }
 
 
+    public static boolean checkIfStoreIsInRange(Retail esql, int storeID)
+    {
+        try
+        {
+            String check_query = String.format("SELECT * FROM Store WHERE storeID = %d", storeID);
+            List<List<String>> check_result = esql.executeQueryAndReturnResult(check_query);
+            if(check_result.size() > 0)
+            {
+                double store_lat = Double.parseDouble(check_result.get(0).get(2));
+                double store_long = Double.parseDouble(check_result.get(0).get(3));
+                double user_lat = esql.current_user.latitude();
+                double user_long = esql.current_user.longitude();
+                if(esql.calculateDistance(store_lat, store_long, user_lat, user_long) <= 30.0)
+                    return true;
+                else
+                {
+                    System.out.println("The store is out of range.");
+                    return false;                    
+                }
+
+            }
+
+        } catch(Exception e){
+            System.out.println("The store given does not exist.");
+            System.err.println(e.getMessage());
+            return false;
+        }
+
+        return false;
+    }
+
     //check if the user is within 30 miles
     public static void placeOrder(Retail esql)
     {
         int storeID = 5;
         String productName = "Pudding"; 
         int unitsOrdered = 3;
-        //check if there is enough quantity available 
+        
         try{
-            String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
-            List<List<String>> result = esql.executeQueryAndReturnResult(query);
-            if(result.size() > 0)
+            //check if the store is within 30 miles of the user
+            Boolean storeInRange = checkIfStoreIsInRange(esql, storeID);
+            if(storeInRange == true)
             {
-                int quantity_available = Integer.parseInt(result.get(0).get(0));
-
-                if(unitsOrdered <= quantity_available)
+                String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
+                List<List<String>> result = esql.executeQueryAndReturnResult(query);
+                if(result.size() > 0)
                 {
-                    quantity_available -= unitsOrdered;
-                    //submit the order
-                    query = String.format("INSERT INTO Orders(customerID, storeID, productName, unitsOrdered) VALUES (%d, %d, '%s', %d)", esql.current_user.userid(), storeID, productName, unitsOrdered);
-                    esql.executeUpdate(query);
-                    //update product quantity
-                    query = String.format("UPDATE Product SET numberOfUnits = %d WHERE storeID = %d AND productName = '%s'", quantity_available, storeID, productName);
-                    esql.executeUpdate(query);
-                    query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
-                    esql.executeQuery(query);
-                }
+                    int quantity_available = Integer.parseInt(result.get(0).get(0));
+                    //check if there is enough quantity available 
+                    if(unitsOrdered <= quantity_available)
+                    {
+                        quantity_available -= unitsOrdered;
+                        //submit the order
+                        query = String.format("INSERT INTO Orders(customerID, storeID, productName, unitsOrdered) VALUES (%d, %d, '%s', %d)", esql.current_user.userid(), storeID, productName, unitsOrdered);
+                        esql.executeUpdate(query);
+                        //update product quantity
+                        query = String.format("UPDATE Product SET numberOfUnits = %d WHERE storeID = %d AND productName = '%s'", quantity_available, storeID, productName);
+                        esql.executeUpdate(query);
+                        query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
+                        esql.executeQuery(query);
+                        System.out.println("Order was successfully added!");
+                    }
+
+                    else {
+                        System.out.println("There is not enough quantity in store to fulfil the order request.");
+                    }
+                }                
             }
+
 
 
         }catch(Exception e){
