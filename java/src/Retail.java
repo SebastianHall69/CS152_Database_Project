@@ -32,370 +32,400 @@ import java.lang.Math;
  */
 public class Retail {
 
-    // reference to physical database connection.
-    private Connection _connection = null;
+	// reference to physical database connection.
+	private Connection _connection = null;
 
-    // handling the keyboard inputs through a BufferedReader
-    // This variable can be global for convenience.
-    static BufferedReader in = new BufferedReader(
-            new InputStreamReader(System.in));
+	// handling the keyboard inputs through a BufferedReader
+	// This variable can be global for convenience.
+	static BufferedReader in = new BufferedReader(
+			new InputStreamReader(System.in));
 
 	// Current signed in user
 	public User current_user = null;
 
-    /**
-     * Creates a new instance of Retail shop
-     *
-     * @param hostname the MySQL or PostgreSQL server hostname
-     * @param database the name of the database
-     * @param username the user name used to login to the database
-     * @param password the user login password
-     * @throws java.sql.SQLException when failed to make a connection.
-     */
-    public Retail(String dbname, String dbport, String user, String passwd) throws SQLException {
+	/**
+	 * Creates a new instance of Retail shop
+	 *
+	 * @param hostname the MySQL or PostgreSQL server hostname
+	 * @param database the name of the database
+	 * @param username the user name used to login to the database
+	 * @param password the user login password
+	 * @throws java.sql.SQLException when failed to make a connection.
+	 */
+	public Retail(String dbname, String dbport, String user, String passwd) throws SQLException {
 
-        System.out.print("Connecting to database...");
-        try{
-            // constructs the connection URL
-            String url = "jdbc:postgresql://localhost:" + dbport + "/" + dbname;
-            System.out.println ("Connection URL: " + url + "\n");
+		System.out.print("Connecting to database...");
+		try{
+			// constructs the connection URL
+			String url = "jdbc:postgresql://localhost:" + dbport + "/" + dbname;
+			System.out.println ("Connection URL: " + url + "\n");
 
-            // obtain a physical connection
-            this._connection = DriverManager.getConnection(url, user, passwd);
-            System.out.println("Done");
-        }catch (Exception e){
-            System.err.println("Error - Unable to Connect to Database: " + e.getMessage() );
-            System.out.println("Make sure you started postgres on this machine");
-            System.exit(-1);
-        }//end catch
-    }//end Retail
+			// obtain a physical connection
+			this._connection = DriverManager.getConnection(url, user, passwd);
+			System.out.println("Done");
+		}catch (Exception e){
+			System.err.println("Error - Unable to Connect to Database: " + e.getMessage() );
+			System.out.println("Make sure you started postgres on this machine");
+			System.exit(-1);
+		}//end catch
+	}//end Retail
 
-    // Method to calculate euclidean distance between two latitude, longitude pairs. 
-    public double calculateDistance (double lat1, double long1, double lat2, double long2){
-        double t1 = (lat1 - lat2) * (lat1 - lat2);
-        double t2 = (long1 - long2) * (long1 - long2);
-        return Math.sqrt(t1 + t2); 
-    }
-    /**
-     * Method to execute an update SQL statement.  Update SQL instructions
-     * includes CREATE, INSERT, UPDATE, DELETE, and DROP.
-     *
-     * @param sql the input SQL string
-     * @throws java.sql.SQLException when update failed
-     */
-    public void executeUpdate (String sql) throws SQLException {
-        // creates a statement object
-        Statement stmt = this._connection.createStatement ();
+	// Method to calculate euclidean distance between two latitude, longitude pairs. 
+	public double calculateDistance (double lat1, double long1, double lat2, double long2){
+		double t1 = (lat1 - lat2) * (lat1 - lat2);
+		double t2 = (long1 - long2) * (long1 - long2);
+		return Math.sqrt(t1 + t2); 
+	}
+	/**
+	 * Method to execute an update SQL statement.  Update SQL instructions
+	 * includes CREATE, INSERT, UPDATE, DELETE, and DROP.
+	 *
+	 * @param sql the input SQL string
+	 * @throws java.sql.SQLException when update failed
+	 */
+	public void executeUpdate (String sql) throws SQLException {
+		// creates a statement object
+		Statement stmt = this._connection.createStatement ();
 
-        // issues the update instruction
-        stmt.executeUpdate (sql);
+		// issues the update instruction
+		stmt.executeUpdate (sql);
 
-        // close the instruction
-        stmt.close ();
-    }//end executeUpdate
+		// close the instruction
+		stmt.close ();
+	}//end executeUpdate
 
-    /**
-     * Method to execute an input query SQL instruction (i.e. SELECT).  This
-     * method issues the query to the DBMS and outputs the results to
-     * standard out.
-     *
-     * @param query the input query string
-     * @return the number of rows returned
-     * @throws java.sql.SQLException when failed to execute the query
-     */
-    public int executeQueryAndPrintResult (String query) throws SQLException {
-        // creates a statement object
-        Statement stmt = this._connection.createStatement ();
+	/**
+	 * Method to execute an input query SQL instruction (i.e. SELECT).  This
+	 * method issues the query to the DBMS and outputs the results to
+	 * standard out.
+	 *
+	 * @param query the input query string
+	 * @return the number of rows returned
+	 * @throws java.sql.SQLException when failed to execute the query
+	 */
+	public int executeQueryAndPrintResult (String query) throws SQLException {
+		// creates a statement object
+		Statement stmt = this._connection.createStatement ();
 
-        // issues the query instruction
-        ResultSet rs = stmt.executeQuery (query);
+		// issues the query instruction
+		ResultSet rs = stmt.executeQuery (query);
 
-        /*
-         ** obtains the metadata object for the returned result set.  The metadata
-         ** contains row and column info.
-         */
-        ResultSetMetaData rsmd = rs.getMetaData ();
-        int numCol = rsmd.getColumnCount ();
-        int rowCount = 0;
+		/*
+		 ** obtains the metadata object for the returned result set.  The metadata
+		 ** contains row and column info.
+		 */
+		ResultSetMetaData rsmd = rs.getMetaData ();
+		int numCol = rsmd.getColumnCount ();
+		int rowCount = 0;
 
-        // iterates through the result set and output them to standard out.
-        boolean outputHeader = true;
-        while (rs.next()){
-            if(outputHeader){
-                for(int i = 1; i <= numCol; i++){
-                    System.out.print(rsmd.getColumnName(i) + "\t");
-                }
-                System.out.println();
-                outputHeader = false;
-            }
-            for (int i=1; i<=numCol; ++i)
-                System.out.print (rs.getString (i) + "\t");
-            System.out.println ();
-            ++rowCount;
-        }//end while
-        stmt.close ();
-        return rowCount;
-    }//end executeQuery
+		// iterates through the result set and output them to standard out.
+		boolean outputHeader = true;
+		while (rs.next()){
+			if(outputHeader){
+				for(int i = 1; i <= numCol; i++){
+					System.out.print(rsmd.getColumnName(i) + "\t");
+				}
+				System.out.println();
+				outputHeader = false;
+			}
+			for (int i=1; i<=numCol; ++i)
+				System.out.print (rs.getString (i) + "\t");
+			System.out.println ();
+			++rowCount;
+		}//end while
+		stmt.close ();
+		return rowCount;
+	}//end executeQuery
 
-    /**
-     * Method to execute an input query SQL instruction (i.e. SELECT).  This
-     * method issues the query to the DBMS and returns the results as
-     * a list of records. Each record in turn is a list of attribute values
-     *
-     * @param query the input query string
-     * @return the query result as a list of records
-     * @throws java.sql.SQLException when failed to execute the query
-     */
-    public List<List<String>> executeQueryAndReturnResult (String query) throws SQLException {
-        // creates a statement object
-        Statement stmt = this._connection.createStatement ();
+	/**
+	 * Method to execute an input query SQL instruction (i.e. SELECT).  This
+	 * method issues the query to the DBMS and returns the results as
+	 * a list of records. Each record in turn is a list of attribute values
+	 *
+	 * @param query the input query string
+	 * @return the query result as a list of records
+	 * @throws java.sql.SQLException when failed to execute the query
+	 */
+	public List<List<String>> executeQueryAndReturnResult (String query) throws SQLException {
+		// creates a statement object
+		Statement stmt = this._connection.createStatement ();
 
-        // issues the query instruction
-        ResultSet rs = stmt.executeQuery (query);
+		// issues the query instruction
+		ResultSet rs = stmt.executeQuery (query);
 
-        /*
-         ** obtains the metadata object for the returned result set.  The metadata
-         ** contains row and column info.
-         */
-        ResultSetMetaData rsmd = rs.getMetaData ();
-        int numCol = rsmd.getColumnCount ();
-        int rowCount = 0;
+		/*
+		 ** obtains the metadata object for the returned result set.  The metadata
+		 ** contains row and column info.
+		 */
+		ResultSetMetaData rsmd = rs.getMetaData ();
+		int numCol = rsmd.getColumnCount ();
+		int rowCount = 0;
 
-        // iterates through the result set and saves the data returned by the query.
-        boolean outputHeader = false;
-        List<List<String>> result  = new ArrayList<List<String>>();
-        while (rs.next()){
-            List<String> record = new ArrayList<String>();
-            for (int i=1; i<=numCol; ++i)
-                record.add(rs.getString (i));
-            result.add(record);
-        }//end while
-        stmt.close ();
-        return result;
-    }//end executeQueryAndReturnResult
+		// iterates through the result set and saves the data returned by the query.
+		boolean outputHeader = false;
+		List<List<String>> result  = new ArrayList<List<String>>();
+		while (rs.next()){
+			List<String> record = new ArrayList<String>();
+			for (int i=1; i<=numCol; ++i)
+				record.add(rs.getString (i));
+			result.add(record);
+		}//end while
+		stmt.close ();
+		return result;
+	}//end executeQueryAndReturnResult
 
-    /**
-     * Method to execute an input query SQL instruction (i.e. SELECT).  This
-     * method issues the query to the DBMS and returns the number of results
-     *
-     * @param query the input query string
-     * @return the number of rows returned
-     * @throws java.sql.SQLException when failed to execute the query
-     */
-    public int executeQuery (String query) throws SQLException {
-        // creates a statement object
-        Statement stmt = this._connection.createStatement ();
+	/**
+	 * Method to execute an input query SQL instruction (i.e. SELECT).  This
+	 * method issues the query to the DBMS and returns the number of results
+	 *
+	 * @param query the input query string
+	 * @return the number of rows returned
+	 * @throws java.sql.SQLException when failed to execute the query
+	 */
+	public int executeQuery (String query) throws SQLException {
+		// creates a statement object
+		Statement stmt = this._connection.createStatement ();
 
-        // issues the query instruction
-        ResultSet rs = stmt.executeQuery (query);
+		// issues the query instruction
+		ResultSet rs = stmt.executeQuery (query);
 
-        int rowCount = 0;
+		int rowCount = 0;
 
-        // iterates through the result set and count nuber of results.
-        while (rs.next()){
-            rowCount++;
-        }//end while
-        stmt.close ();
-        return rowCount;
-    }
+		// iterates through the result set and count nuber of results.
+		while (rs.next()){
+			rowCount++;
+		}//end while
+		stmt.close ();
+		return rowCount;
+	}
 
-    /**
-     * Method to fetch the last value from sequence. This
-     * method issues the query to the DBMS and returns the current
-     * value of sequence used for autogenerated keys
-     *
-     * @param sequence name of the DB sequence
-     * @return current value of a sequence
-     * @throws java.sql.SQLException when failed to execute the query
-     */
-    public int getCurrSeqVal(String sequence) throws SQLException {
-        Statement stmt = this._connection.createStatement ();
+	/**
+	 * Method to fetch the last value from sequence. This
+	 * method issues the query to the DBMS and returns the current
+	 * value of sequence used for autogenerated keys
+	 *
+	 * @param sequence name of the DB sequence
+	 * @return current value of a sequence
+	 * @throws java.sql.SQLException when failed to execute the query
+	 */
+	public int getCurrSeqVal(String sequence) throws SQLException {
+		Statement stmt = this._connection.createStatement ();
 
-        ResultSet rs = stmt.executeQuery (String.format("Select currval('%s')", sequence));
-        if (rs.next())
-            return rs.getInt(1);
-        return -1;
-    }
+		ResultSet rs = stmt.executeQuery (String.format("Select currval('%s')", sequence));
+		if (rs.next())
+			return rs.getInt(1);
+		return -1;
+	}
 
-    /**
-     * Method to close the physical connection if it is open.
-     */
-    public void cleanup(){
-        try{
-            if (this._connection != null){
-                this._connection.close ();
-            }//end if
-        }catch (SQLException e){
-            // ignored.
-        }//end try
-    }//end cleanup
+	/**
+	 * Method to close the physical connection if it is open.
+	 */
+	public void cleanup(){
+		try{
+			if (this._connection != null){
+				this._connection.close ();
+			}//end if
+		}catch (SQLException e){
+			// ignored.
+		}//end try
+	}//end cleanup
 
-    /**
-     * The main execution method
-     *
-     * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
-     */
-    public static void main (String[] args) {
-        if (args.length != 3) {
-            System.err.println (
-                    "Usage: " +
-                    "java [-classpath <classpath>] " +
-                    Retail.class.getName () +
-                    " <dbname> <port> <user>");
+	/**
+	 * The main execution method
+	 *
+	 * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
+	 */
+	public static void main (String[] args) {
+		if (args.length != 3) {
+			System.err.println (
+					"Usage: " +
+					"java [-classpath <classpath>] " +
+					Retail.class.getName () +
+					" <dbname> <port> <user>");
 			System.err.println("num args: " + args.length);
-            return;
-        }//end if
+			return;
+		}//end if
 
-        Greeting();
-        Retail esql = null;
-        try{
-            // use postgres JDBC driver.
-            Class.forName ("org.postgresql.Driver").newInstance ();
-            // instantiate the Retail object and creates a physical
-            // connection.
-            String dbname = args[0];
-            String dbport = args[1];
-            String user = args[2];
-            esql = new Retail (dbname, dbport, user, "");
+		Greeting();
+		Retail esql = null;
+		try{
+			// use postgres JDBC driver.
+			Class.forName ("org.postgresql.Driver").newInstance ();
+			// instantiate the Retail object and creates a physical
+			// connection.
+			String dbname = args[0];
+			String dbport = args[1];
+			String user = args[2];
+			esql = new Retail (dbname, dbport, user, "");
 
-            boolean keepon = true;
-            while(keepon) {
-                // These are sample SQL statements
-                System.out.println("MAIN MENU");
-                System.out.println("---------");
-                System.out.println("1. Create user");
-                System.out.println("2. Log in");
-                System.out.println("9. < EXIT");
-                switch (readChoice()){
-                    case 1: CreateUser(esql); break;
-                    case 2: LogIn(esql); break;
-                    case 9: keepon = false; break;
-                    default : System.out.println("Unrecognized choice!"); break;
-                }//end switch
-                if (esql.current_user != null) {
-                    boolean usermenu = true;
-                    while(usermenu) {
-                        System.out.println("MAIN MENU");
-                        System.out.println("---------");
-                        System.out.println("1. View Stores within 30 miles");
-                        System.out.println("2. View Product List");
-                        System.out.println("3. Place a Order");
-                        System.out.println("4. View 5 recent orders");
+			boolean keep_on = true;
+			while(keep_on) {
+				// Login
+				keep_on = login_menu(esql);
 
-                        //the following functionalities basically used by managers
-                        System.out.println("5. Update Product");
-                        System.out.println("6. View 5 recent Product Updates Info");
-                        System.out.println("7. View 5 Popular Items");
-                        System.out.println("8. View 5 Popular Customers");
-                        System.out.println("9. Place Product Supply Request to Warehouse");
+				// While logged in, give users choices
+				while(esql.current_user != null) {
+					if(esql.current_user.type().equals("Manager")) {
+						managerOptions(esql);
+					} else {
+						userOptions(esql);
+					}
+				}
+			}//end while
+		}catch(Exception e) {
+			System.err.println (e.getMessage ());
+		}finally{
+			// make sure to cleanup the created table and close the connection.
+			try{
+				if(esql != null) {
+					System.out.print("Disconnecting from database...");
+					esql.cleanup ();
+					System.out.println("Done\n\nBye !");
+				}//end if
+			}catch (Exception e) {
+				// ignored.
+			}//end try
+		}//end try
+	}//end main
 
-                        System.out.println(".........................");
-                        System.out.println("20. Log out");
-                        switch (readChoice()){
-                            case 1: viewStores(esql); break;
-                            case 2: viewProducts(esql); break;
-                            case 3: placeOrder(esql); break;
-                            case 4: viewRecentOrders(esql); break;
-                            case 5: updateProduct(esql); break;
-                            case 6: viewRecentUpdates(esql); break;
-                            case 7: viewPopularProducts(esql); break;
-                            case 8: viewPopularCustomers(esql); break;
-                            case 9: placeProductSupplyRequests(esql); break;
+	public static boolean login_menu(Retail esql) {
+		System.out.println("MAIN MENU");
+		System.out.println("---------");
+		System.out.println("1. Create user");
+		System.out.println("2. Log in");
+		System.out.println("9. < EXIT");
+		switch (readChoice()){
+			case 1: CreateUser(esql); break;
+			case 2: LogIn(esql); break;
+			case 9: return false;
+			default : System.out.println("Unrecognized choice!"); break;
+		}
+		return true;
+	}
 
-                            case 20: usermenu = false; esql.current_user = null; break;
-                            default : System.out.println("Unrecognized choice!"); break;
-                        }
-                    }
-                }
-            }//end while
-        }catch(Exception e) {
-            System.err.println (e.getMessage ());
-        }finally{
-            // make sure to cleanup the created table and close the connection.
-            try{
-                if(esql != null) {
-                    System.out.print("Disconnecting from database...");
-                    esql.cleanup ();
-                    System.out.println("Done\n\nBye !");
-                }//end if
-            }catch (Exception e) {
-                // ignored.
-            }//end try
-        }//end try
-    }//end main
+	public static void managerOptions(Retail esql) {
+		System.out.println("MAIN MENU");
+		System.out.println("---------");
+		System.out.println("1.  View Stores within 30 miles");
+		System.out.println("2.  View Product List");
+		System.out.println("3.  Place a Order");
+		System.out.println("4.  View 5 recent orders");
+		System.out.println("5.  View 5 recent orders");
+		System.out.println("6.  Update Product");
+		System.out.println("7.  View 5 recent Product Updates Info");
+		System.out.println("8.  View 5 Popular Items");
+		System.out.println("9.  View 5 Popular Customers");
+		System.out.println("10. Place Product Supply Request to Warehouse");
+		System.out.println(".........................");
+		System.out.println("20. Log out");
 
-    public static void Greeting(){
-        System.out.println(
-                "\n\n*******************************************************\n" +
-                "              User Interface                         \n" +
-                "*******************************************************\n");
-    }//end Greeting
+		switch (readChoice()){
+			case 1: viewStores(esql); break;
+			case 2: viewProducts(esql); break;
+			case 3: placeOrder(esql); break;
+			case 4: viewRecentOrders(esql); break;
+			case 5: updateProduct(esql); break;
+			case 6: viewRecentUpdates(esql); break;
+			case 7: viewPopularProducts(esql); break;
+			case 8: viewPopularCustomers(esql); break;
+			case 9: placeProductSupplyRequests(esql); break;
+			case 20: esql.current_user = null; break;
+			default : System.out.println("Unrecognized choice!"); break;
+		}
+	}
 
-    /*
-     * Reads the users choice given from the keyboard
-     * @int
-     **/
-    public static int readChoice() {
-        int input;
-        // returns only if a correct value is given.
-        do {
-            System.out.print("Please make your choice: ");
-            try { // read the integer, parse it and break.
-                input = Integer.parseInt(in.readLine());
-                break;
-            }catch (Exception e) {
-                System.out.println("Your input is invalid!");
-                continue;
-            }//end try
-        }while (true);
-        return input;
-    }//end readChoice
+	public static void userOptions(Retail esql) {
+		System.out.println("MAIN MENU");
+		System.out.println("---------");
+		System.out.println("1. View Stores within 30 miles");
+		System.out.println("2. View Product List");
+		System.out.println("3. Place a Order");
+		System.out.println("4. View 5 recent orders");
+		System.out.println(".........................");
+		System.out.println("20. Log out");
 
-    /*
-     * Creates a new user
-     **/
-    public static void CreateUser(Retail esql){
-        try{
-            System.out.print("\tEnter name: ");
-            String name = in.readLine();
-            System.out.print("\tEnter password: ");
-            String password = in.readLine();
-            System.out.print("\tEnter latitude: ");   
-            String latitude = in.readLine();       //enter lat value between [0.0, 100.0]
-            System.out.print("\tEnter longitude: ");  //enter long value between [0.0, 100.0]
-            String longitude = in.readLine();
+		switch (readChoice()){
+			case 1: viewStores(esql); break;
+			case 2: viewProducts(esql); break;
+			case 3: placeOrder(esql); break;
+			case 4: viewRecentOrders(esql); break;
+			case 20: esql.current_user = null; break;
+			default : System.out.println("Unrecognized choice!"); break;
+		}
+	}
 
-            String type="Customer";
+	public static void Greeting(){
+		System.out.println(
+				"\n\n*******************************************************\n" +
+				"              User Interface                         \n" +
+				"*******************************************************\n");
+	}//end Greeting
 
-            // Enforce unique username, can be DB constraint or trigger
+	/*
+	 * Reads the users choice given from the keyboard
+	 * @int
+	 **/
+	public static int readChoice() {
+		int input;
+		// returns only if a correct value is given.
+		do {
+			System.out.print("Please make your choice: ");
+			try { // read the integer, parse it and break.
+				input = Integer.parseInt(in.readLine());
+				break;
+			}catch (Exception e) {
+				System.out.println("Your input is invalid!");
+				continue;
+			}//end try
+		}while (true);
+		return input;
+	}//end readChoice
+
+	/*
+	 * Creates a new user
+	 **/
+	public static void CreateUser(Retail esql){
+		try{
+			System.out.print("\tEnter name: ");
+			String name = in.readLine();
+			System.out.print("\tEnter password: ");
+			String password = in.readLine();
+			System.out.print("\tEnter latitude: ");   
+			String latitude = in.readLine();       //enter lat value between [0.0, 100.0]
+			System.out.print("\tEnter longitude: ");  //enter long value between [0.0, 100.0]
+			String longitude = in.readLine();
+
+			String type="Customer";
+
+			// Enforce unique username, can be DB constraint or trigger
 			String query = String.format("SELECT * FROM users WHERE name='%s';", name);
 			if(esql.executeQuery(query) > 0) {
 				System.out.println("Username '" + name + "' already exists. Please login instead.");
 				return;
 			}
-            query = String.format("INSERT INTO USERS (name, password, latitude, longitude, type) VALUES ('%s','%s', %s, %s,'%s')", name, password, latitude, longitude, type);
+			query = String.format("INSERT INTO USERS (name, password, latitude, longitude, type) VALUES ('%s','%s', %s, %s,'%s')", name, password, latitude, longitude, type);
 
-            esql.executeUpdate(query);
-            System.out.println ("User successfully created!");
-        }catch(Exception e){
-            System.err.println (e.getMessage ());
-        }
-    }//end CreateUser
+			esql.executeUpdate(query);
+			System.out.println ("User successfully created!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+	}//end CreateUser
 
 
-    /*
-     * Check log in credentials for an existing user
-     * @return User login or null is the user does not exist
-     **/
-    public static void LogIn(Retail esql){
-        try{
-            System.out.print("\tEnter name: ");
-            String name = in.readLine();
-            System.out.print("\tEnter password: ");
-            String password = in.readLine();
+	/*
+	 * Check log in credentials for an existing user
+	 * @return User login or null is the user does not exist
+	 **/
+	public static void LogIn(Retail esql){
+		try{
+			System.out.print("\tEnter name: ");
+			String name = in.readLine();
+			System.out.print("\tEnter password: ");
+			String password = in.readLine();
 
-            String query = String.format("SELECT userid, type, latitude, longitude FROM USERS WHERE name = '%s' AND password = '%s'", name, password);
-            List<List<String>> user_data = esql.executeQueryAndReturnResult(query);
+			String query = String.format("SELECT userid, type, latitude, longitude FROM USERS WHERE name = '%s' AND password = '%s'", name, password);
+			List<List<String>> user_data = esql.executeQueryAndReturnResult(query);
 
 			if(user_data.size() > 0) {
 				esql.current_user = new User();
@@ -405,176 +435,188 @@ public class Retail {
 				esql.current_user.setLatitude(Double.parseDouble(user_data.get(0).get(2)));
 				esql.current_user.setLongitude(Double.parseDouble(user_data.get(0).get(3)));
 			}
-        }catch(Exception e){
-            System.err.println (e.getMessage ());
-        }
-    }//end
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+	}//end
 
-    // Rest of the functions definition go in here
+	// Rest of the functions definition go in here
 	/* Maybe combine Stores and Product list.
-      After logging in initial, find the closest store and display the products at that given store
-      Add a function to change the current store and use viewStores to give the user options
-    */
-   //View Stores within 30 miles
-   public static List<List<String>> getClosestStores(Retail esql)
-   {
-      try{
-         String query = String.format("SELECT * FROM Store");
-         List<List<String>> result = esql.executeQueryAndReturnResult(query);
-         //System.out.print(result);
-         List<List<String>> in_range_result = new ArrayList<List<String>>(); 
+	   After logging in initial, find the closest store and display the products at that given store
+	   Add a function to change the current store and use viewStores to give the user options
+	   */
+	//View Stores within 30 miles
+	public static List<List<String>> getClosestStores(Retail esql)
+	{
+		try{
+			String query = String.format("SELECT * FROM Store");
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			//System.out.print(result);
+			List<List<String>> in_range_result = new ArrayList<List<String>>(); 
 
-         for(List<String> i:result)
-         {
-            double store_lat = Double.parseDouble(i.get(2));
-            double store_long = Double.parseDouble(i.get(3));
-            double user_lat = esql.current_user.latitude();
-            double user_long = esql.current_user.longitude();
-            double distance = esql.calculateDistance(store_lat, store_long, user_lat, user_long);
-            if(distance <= 30.0)
-            {
-               List<String> record = i;
-               record.add(String.valueOf(distance));
-               in_range_result.add(record);
-            }
-         }
-         //System.out.print(in_range_result);
-         //maybe sort the distances before returning
-         /*Collections.sort(in_range_result, (result_1, result_2) -> {
-            return Integer.parseInt(result_1.get(6)) - Integer.parseInt(result_2.get(6));
-         });*/
-         return in_range_result;
-      }catch(Exception e){
-         System.err.println(e.getMessage());
-         return null;
-      }
+			for(List<String> i:result)
+			{
+				double store_lat = Double.parseDouble(i.get(2));
+				double store_long = Double.parseDouble(i.get(3));
+				double user_lat = esql.current_user.latitude();
+				double user_long = esql.current_user.longitude();
+				double distance = esql.calculateDistance(store_lat, store_long, user_lat, user_long);
+				if(distance <= 30.0)
+				{
+					List<String> record = i;
+					record.add(String.valueOf(distance));
+					in_range_result.add(record);
+				}
+			}
+			//System.out.print(in_range_result);
+			//maybe sort the distances before returning
+			/*Collections.sort(in_range_result, (result_1, result_2) -> {
+			  return Integer.parseInt(result_1.get(6)) - Integer.parseInt(result_2.get(6));
+			  });*/
+			return in_range_result;
+		}catch(Exception e){
+			System.err.println(e.getMessage());
+			return null;
+		}
 
 
-   }
-   //add a user parameter
-   public static void viewStores(Retail esql)
-   {
-      List<List<String>> closest_store = getClosestStores(esql);
-      System.out.print("Stores located within 30 miles:\n");
-      for(List<String> i:closest_store)
-      {
-         System.out.println("Store ID: " + i.get(0));
-         System.out.println("Store Name: " + i.get(1));
-         System.out.println("Distance Away: " + i.get(6) + " miles");
-      }
-   }
+	}
+	//add a user parameter
+	public static void viewStores(Retail esql)
+	{
+		List<List<String>> closest_store = getClosestStores(esql);
+		System.out.print("Stores located within 30 miles:\n");
+		for(List<String> i:closest_store)
+		{
+			System.out.println("Store ID: " + i.get(0));
+			System.out.println("Store Name: " + i.get(1));
+			System.out.printf("Distance Away: %.2f miles\n\n", Double.parseDouble(i.get(6)));
+		}
+	}
 	//View Product List, needs store id
-   public static void viewProducts(Retail esql)
-   {
-      //return view of all items in the given store
-      int storeID = 5;
-      try{
-         String query = String.format("SELECT * FROM Product WHERE storeID = %s", storeID);
-         List<List<String>> result = esql.executeQueryAndReturnResult(query);
-         System.out.println(result);
-      }catch(Exception e){
-         System.err.println(e.getMessage());
-      }
+	public static void viewProducts(Retail esql)
+	{
+		try{
+			//return view of all items in the given store
+			System.out.print("Enter store id: ");
+			int storeID = Integer.parseInt(in.readLine());
+			String query = String.format("SELECT productname, numberofunits, priceperunit FROM Product WHERE storeID = %d;", storeID);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			
+			// Show results
+			for(List<String> product : result) {
+				System.out.println("Name:  " + product.get(0).trim());
+				System.out.println("Stock: " + product.get(1).trim());
+				System.out.println("Price: $" + product.get(2).trim() + "\n");
+			}
+			if(result.size() < 1) {
+				System.out.println("No result found\n");
+			}
+		}catch(Exception e){
+			System.err.println(e.getMessage());
+		}
 
-   }
-
-
-    public static boolean checkIfStoreIsInRange(Retail esql, int storeID)
-    {
-        try
-        {
-            String check_query = String.format("SELECT * FROM Store WHERE storeID = %d", storeID);
-            List<List<String>> check_result = esql.executeQueryAndReturnResult(check_query);
-            if(check_result.size() > 0)
-            {
-                double store_lat = Double.parseDouble(check_result.get(0).get(2));
-                double store_long = Double.parseDouble(check_result.get(0).get(3));
-                double user_lat = esql.current_user.latitude();
-                double user_long = esql.current_user.longitude();
-                if(esql.calculateDistance(store_lat, store_long, user_lat, user_long) <= 30.0)
-                    return true;
-                else
-                {
-                    System.out.println("The store is out of range.");
-                    return false;                    
-                }
-
-            }
-
-        } catch(Exception e){
-            System.out.println("The store given does not exist.");
-            System.err.println(e.getMessage());
-            return false;
-        }
-
-        return false;
-    }
-
-    //check if the user is within 30 miles
-    public static void placeOrder(Retail esql)
-    {
-        int storeID = 5;
-        String productName = "Pudding"; 
-        int unitsOrdered = 3;
-        
-        try{
-            //check if the store is within 30 miles of the user
-            Boolean storeInRange = checkIfStoreIsInRange(esql, storeID);
-            if(storeInRange == true)
-            {
-                String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
-                List<List<String>> result = esql.executeQueryAndReturnResult(query);
-                if(result.size() > 0)
-                {
-                    int quantity_available = Integer.parseInt(result.get(0).get(0));
-                    //check if there is enough quantity available 
-                    if(unitsOrdered <= quantity_available)
-                    {
-                        quantity_available -= unitsOrdered;
-                        //submit the order
-                        query = String.format("INSERT INTO Orders(customerID, storeID, productName, unitsOrdered) VALUES (%d, %d, '%s', %d)", esql.current_user.userid(), storeID, productName, unitsOrdered);
-                        esql.executeUpdate(query);
-                        //update product quantity
-                        query = String.format("UPDATE Product SET numberOfUnits = %d WHERE storeID = %d AND productName = '%s'", quantity_available, storeID, productName);
-                        esql.executeUpdate(query);
-                        query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s'", storeID, productName);
-                        esql.executeQuery(query);
-                        System.out.println("Order was successfully added!");
-                    }
-
-                    else {
-                        System.out.println("There is not enough quantity in store to fulfil the order request.");
-                    }
-                }                
-            }
+	}
 
 
+	public static boolean checkIfStoreIsInRange(Retail esql, int storeID)
+	{
+		try
+		{
+			String check_query = String.format("SELECT * FROM Store WHERE storeID = %d", storeID);
+			List<List<String>> check_result = esql.executeQueryAndReturnResult(check_query);
+			if(check_result.size() > 0)
+			{
+				double store_lat = Double.parseDouble(check_result.get(0).get(2));
+				double store_long = Double.parseDouble(check_result.get(0).get(3));
+				double user_lat = esql.current_user.latitude();
+				double user_long = esql.current_user.longitude();
+				return esql.calculateDistance(store_lat, store_long, user_lat, user_long) <= 30.0;
+			}
 
-        }catch(Exception e){
-            System.err.println(e.getMessage());
+		} catch(Exception e){
+			System.out.println("The store given does not exist.");
+			System.err.println(e.getMessage());
+			return false;
+		}
 
-        }
+		return false;
+	}
 
-    }
+	//check if the user is within 30 miles
+	public static void placeOrder(Retail esql)
+	{
+
+		try{
+			System.out.print("Enter store id: ");
+			int storeID = Integer.parseInt(in.readLine());
+			System.out.print("Enter product name: ");
+			String productName = in.readLine();
+			System.out.print("Enter quantity: ");
+			int unitsOrdered = Integer.parseInt(in.readLine());
+
+			//check if the store is within 30 miles of the user
+			if(checkIfStoreIsInRange(esql, storeID) == false) {
+				System.out.printf("Store #%d is outside of your 30 mile range\n", storeID);
+				return;
+			}
+
+			// Query product availability
+			String query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s';", storeID, productName);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			if(result.size() < 1) {
+				System.out.printf("Could not find product '%s' at store with id %d\n", productName, storeID);
+				return;
+			}
+
+			// check if there is enough quantity available 
+			int quantity_available = Integer.parseInt(result.get(0).get(0));
+			if(unitsOrdered > quantity_available) {
+				System.out.println("There is not enough quantity in store to fulfil the order request.");
+				return;
+			}
+
+			// submit the order and update product quantity
+			quantity_available -= unitsOrdered;
+			query = String.format("INSERT INTO Orders(customerID, storeID, productName, unitsOrdered) VALUES (%d, %d, '%s', %d);", esql.current_user.userid(), storeID, productName, unitsOrdered);
+			esql.executeUpdate(query);
+			query = String.format("UPDATE Product SET numberOfUnits = %d WHERE storeID = %d AND productName = '%s';", quantity_available, storeID, productName);
+			esql.executeUpdate(query);
+			query = String.format("SELECT numberOfUnits FROM Product WHERE storeID = %d and productName = '%s';", storeID, productName); // This doesn't do anything. Just left in from testing?
+			esql.executeQuery(query);
+			System.out.println("Order was successfully added!");
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
 
 
-    public static void viewRecentOrders(Retail esql) 
-    {
-        try{
-            String query = String.format("SELECT * FROM Orders WHERE customerID = %s ORDER BY orderTime DESC LIMIT 5", esql.current_user.userid());
-            List<List<String>> result = esql.executeQueryAndReturnResult(query);
-            System.out.println(result);
+	public static void viewRecentOrders(Retail esql) 
+	{
+		try{
+			String query = String.format("SELECT ordernumber, storeid, productname, unitsordered, ordertime FROM Orders WHERE customerID = %d ORDER BY orderTime DESC LIMIT 5;", esql.current_user.userid());
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
-        }catch(Exception e){
-            System.err.println(e.getMessage());
-        }
-    }
+			for(List<String> order : result) {
+				System.out.printf("Order: #%s\n", order.get(0));
+				System.out.printf("Store: #%s\n", order.get(1));
+				System.out.printf("Product: %s\n", order.get(2));
+				System.out.printf("Quantity: %s\n", order.get(3));
+				System.out.printf("Time: %s\n\n", order.get(4));
+			}
+			if(result.size() < 1) {
+				System.out.println("No recent orders found");
+			}
+		}catch(Exception e){
+			System.err.println(e.getMessage());
+		}
+	}
 
-    public static void updateProduct(Retail esql) {}
-    public static void viewRecentUpdates(Retail esql) {}
-    public static void viewPopularProducts(Retail esql) {}
-    public static void viewPopularCustomers(Retail esql) {}
-    public static void placeProductSupplyRequests(Retail esql) {}
+	public static void updateProduct(Retail esql) {}
+	public static void viewRecentUpdates(Retail esql) {}
+	public static void viewPopularProducts(Retail esql) {}
+	public static void viewPopularCustomers(Retail esql) {}
+	public static void placeProductSupplyRequests(Retail esql) {}
 
 }//end Retail
 
