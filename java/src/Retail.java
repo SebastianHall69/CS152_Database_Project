@@ -265,7 +265,7 @@ public class Retail {
 
 				// While logged in, give users choices
 				while(esql.current_user != null) {
-					if(esql.current_user.type().equals("Manager")) {
+					if(esql.current_user.type().equals("manager")) {
 						managerOptions(esql);
 					} else {
 						userOptions(esql);
@@ -310,7 +310,7 @@ public class Retail {
 		System.out.println("2.  View Product List");
 		System.out.println("3.  Place a Order");
 		System.out.println("4.  View 5 recent orders");
-		System.out.println("5.  View 5 recent orders");
+		System.out.println("5.  View order info on a store");
 		System.out.println("6.  Update Product");
 		System.out.println("7.  View 5 recent Product Updates Info");
 		System.out.println("8.  View 5 Popular Items");
@@ -395,7 +395,7 @@ public class Retail {
 			System.out.print("\tEnter longitude: ");  //enter long value between [0.0, 100.0]
 			String longitude = in.readLine();
 
-			String type="Customer";
+			String type="customer";
 
 			// Enforce unique username, can be DB constraint or trigger
 			String query = String.format("SELECT * FROM users WHERE name='%s';", name);

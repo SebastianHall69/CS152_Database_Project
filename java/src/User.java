@@ -26,11 +26,11 @@ public class User {
 	}
 
 	void setName(String name) {
-		this._name = name;
+		this._name = name.trim();
 	}
 
 	void setType(String type) {
-		this._type = type;
+		this._type = type.trim();
 	}
 
 	int userid() {
