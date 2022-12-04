@@ -391,11 +391,16 @@ public class Retail {
 			System.out.print("\tEnter password: ");
 			String password = in.readLine();
 			System.out.print("\tEnter latitude: ");   
-			String latitude = in.readLine();       //enter lat value between [0.0, 100.0]
-			System.out.print("\tEnter longitude: ");  //enter long value between [0.0, 100.0]
-			String longitude = in.readLine();
-
+			double latitude = Double.parseDouble(in.readLine()); //enter lat value between [0.0, 100.0]
+			System.out.print("\tEnter longitude: "); //enter long value between [0.0, 100.0]
+			double longitude = Double.parseDouble(in.readLine());
 			String type="customer";
+
+			// Enforce latitude / longitude constraints
+			if(latitude < 0 || latitude > 100 || longitude < 0 || longitude > 100) {
+				System.out.println("Invalid latitude / longitude. Range [0, 100].");
+				return;
+			}
 
 			// Enforce unique username, can be DB constraint or trigger
 			String query = String.format("SELECT * FROM users WHERE name='%s';", name);
