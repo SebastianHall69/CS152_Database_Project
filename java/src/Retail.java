@@ -600,12 +600,12 @@ public class Retail {
 	public static void viewRecentOrders(Retail esql) 
 	{
 		try{
-			String query = String.format("SELECT ordernumber, storeid, productname, unitsordered, ordertime FROM Orders WHERE customerID = %d ORDER BY orderTime DESC LIMIT 5;", esql.current_user.userid());
+			String query = String.format("SELECT S.name, O.storeid, O.productname, O.unitsordered, O.ordertime FROM orders O, store S WHERE O.storeid = S.storeid AND O.customerID = %d ORDER BY O.orderTime DESC LIMIT 5;", esql.current_user.userid());
 			List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
 			for(List<String> order : result) {
-				System.out.printf("Order: #%s\n", order.get(0));
-				System.out.printf("Store: #%s\n", order.get(1));
+				System.out.printf("Store: #%s\n", order.get(0));
+				System.out.printf("Store id: #%s\n", order.get(1));
 				System.out.printf("Product: %s\n", order.get(2));
 				System.out.printf("Quantity: %s\n", order.get(3));
 				System.out.printf("Time: %s\n\n", order.get(4));
@@ -719,8 +719,61 @@ public class Retail {
 			System.err.println(e.getMessage());
 		}
 	}
-	public static void viewPopularProducts(Retail esql) {}
-	public static void viewPopularCustomers(Retail esql) {}
+	public static void viewPopularProducts(Retail esql) {
+		try {
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+
+			// Check if manages store
+			String query = String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid());
+			if(esql.executeQuery(query) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot view these popular products, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
+			// Print results
+			query = String.format("SELECT productname, COUNT(ordernumber) FROM orders WHERE storeid = %d GROUP BY productname ORDER BY COUNT(ordernumber) DESC LIMIT 5;", store_id);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+			for(List<String> product : result) {
+				System.out.printf("Product: %s\n", product.get(0));
+				System.out.printf("Order count: %s\n\n", product.get(1));
+			}
+			if(result.size() < 1) {
+				System.out.println("No popular products found");
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	public static void viewPopularCustomers(Retail esql) {
+		try {
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+
+			// Check if manages store
+			String query = String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid());
+			if(esql.executeQuery(query) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot view these popular customers, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
+			// Print results
+			query = String.format("SELECT O.customerid, U.name, COUNT(O.ordernumber) FROM orders O, users U WHERE O.customerid = U.userid GROUP BY O.customerid, U.name ORDER BY COUNT(ordernumber) DESC LIMIT 5;", store_id);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+			for(List<String> customer : result) {
+				System.out.printf("Customer id: #%s\n", customer.get(0));
+				System.out.printf("Customer: #%s\n", customer.get(1));
+				System.out.printf("Order count: #%s\n\n", customer.get(2));
+			}
+			if(result.size() < 1) {
+				System.out.println("No popular customers found");
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
 	public static void placeProductSupplyRequests(Retail esql) {}
 
 }//end Retail
