@@ -324,11 +324,12 @@ public class Retail {
 			case 2: viewProducts(esql); break;
 			case 3: placeOrder(esql); break;
 			case 4: viewRecentOrders(esql); break;
-			case 5: updateProduct(esql); break;
-			case 6: viewRecentUpdates(esql); break;
-			case 7: viewPopularProducts(esql); break;
-			case 8: viewPopularCustomers(esql); break;
-			case 9: placeProductSupplyRequests(esql); break;
+			case 5: viewStoreOrders(esql); break;
+			case 6: updateProduct(esql); break;
+			case 7: viewRecentUpdates(esql); break;
+			case 8: viewPopularProducts(esql); break;
+			case 9: viewPopularCustomers(esql); break;
+			case 10: placeProductSupplyRequests(esql); break;
 			case 20: esql.current_user = null; break;
 			default : System.out.println("Unrecognized choice!"); break;
 		}
@@ -617,8 +618,107 @@ public class Retail {
 		}
 	}
 
-	public static void updateProduct(Retail esql) {}
-	public static void viewRecentUpdates(Retail esql) {}
+	public static void viewStoreOrders(Retail esql) {
+		try {
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+
+			// Check if manages store
+			String query = String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid());
+			if(esql.executeQuery(query) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot view these orders, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
+			// List orders
+			query = String.format("SELECT O.ordernumber, O.storeid, O.ordertime, U.name, O.productname, O.unitsordered FROM orders O, store S, users U WHERE S.storeid = %d AND S.storeid = O.storeid AND O.customerid = U.userid;", store_id);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			for(List<String> order : result) {
+				System.out.printf("Order: #%s\n", order.get(0));
+				System.out.printf("Store: #%s\n", order.get(1));
+				System.out.printf("Date: %s\n", order.get(2));
+				System.out.printf("Customer: %s\n", order.get(3));
+				System.out.printf("Product: %s\n", order.get(4));
+				System.out.printf("Quantity: %s\n\n", order.get(5));
+			}
+			if(result.size() < 1) {
+				System.out.printf("No orders found for store #%d\n", store_id);
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	public static void updateProduct(Retail esql) {
+		try {
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+
+			// Check if manages store
+			String query = String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid());
+			if(esql.executeQuery(query) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot update these products, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
+			// Get update information
+			System.out.print("Enter product name: ");
+			String product_name = in.readLine();
+			System.out.print("Enter new quantity (-1 to keep same value): ");
+			int quantity = Integer.parseInt(in.readLine());
+			System.out.print("Enter new price (-1 to keep same value): ");
+			double price = Double.parseDouble(in.readLine());
+
+			// Determine type of update
+			if(quantity + price < -1) {
+				System.out.println("You gave no information to update");
+				return;
+			}
+			String updates = "SET ";
+			if(quantity >= 0 && price >= 0) updates += String.format("numberofunits = %d, priceperunit = %f", quantity, price);
+			else if(quantity >= 0) updates += String.format("numberofunits = %d", quantity);
+			else if(price >= 0) updates += String.format("priceperunit = %f", price);
+
+			// Update product table
+			query = String.format("UPDATE product %s WHERE storeid = %d AND productname = '%s';", updates, store_id, product_name);
+			esql.executeUpdate(query);
+
+			// Update productupdates table
+			query = String.format("INSERT INTO productupdates (managerid, storeid, productname, updatedon) VALUES (%d, %d, '%s', NOW());", esql.current_user.userid(), store_id, product_name);
+			esql.executeUpdate(query);
+			System.out.println("Update Successful");
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	public static void viewRecentUpdates(Retail esql) {
+		try {
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+
+			// Check if manages store
+			String query = String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid());
+			if(esql.executeQuery(query) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot view these updates, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
+			query = String.format("SELECT updatenumber, managerid, productname, updatedon FROM productupdates WHERE storeid = %d ORDER BY updatedon DESC LIMIT 5;", store_id);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+			for(List<String> update : result) {
+				System.out.printf("Update: #%s\n", update.get(0));
+				System.out.printf("Manager: #%s\n", update.get(1));
+				System.out.printf("Product: #%s\n", update.get(2));
+				System.out.printf("Time: #%s\n\n", update.get(3));
+			}
+			if(result.size() < 1) {
+				System.out.println("No recent updates found");
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
 	public static void viewPopularProducts(Retail esql) {}
 	public static void viewPopularCustomers(Retail esql) {}
 	public static void placeProductSupplyRequests(Retail esql) {}
