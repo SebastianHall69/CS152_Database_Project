@@ -774,7 +774,56 @@ public class Retail {
 			System.err.println(e.getMessage());
 		}
 	}
-	public static void placeProductSupplyRequests(Retail esql) {}
+	public static void placeProductSupplyRequests(Retail esql) {
+		try {
+			// Read input
+			System.out.print("Enter store id: ");
+			int store_id = Integer.parseInt(in.readLine());
+			System.out.print("Enter product name: ");
+			String product_name = in.readLine();
+			System.out.print("Enter units requested: ");
+			int quantity = Integer.parseInt(in.readLine());
+			System.out.print("Enter warehouse id: ");
+			int warehouse_id = Integer.parseInt(in.readLine());
+
+			// Check if store exists
+			if(esql.executeQuery(String.format("SELECT * FROM store WHERE storeid = %d;", store_id)) == 0) {
+				System.out.printf("Store #%d does not exist\n", store_id);
+				return;
+			}
+
+			// Check if product exists in store
+			if(esql.executeQuery(String.format("SELECT * FROM product WHERE storeid = %d AND productname = '%s';", store_id, product_name)) == 0) {
+				System.out.printf("Product '%s' is not carried at store #%d\n", product_name, store_id);
+				return;
+			}
+
+			// Check if warehouse exists
+			if(esql.executeQuery(String.format("SELECT * FROM warehouse WHERE warehouseid = %d;", warehouse_id)) == 0) {
+				System.out.printf("Warehouse #%d does not exist\n", warehouse_id);
+				return;
+			}
+
+			// Validate quantity
+			if(quantity < 1) {
+				System.out.printf("Must have a postive value for units requested\n");
+				return;
+			}
+			
+			// Place supply request
+			String query = String.format("INSERT INTO productsupplyrequests (managerid, warehouseid, storeid, productname, unitsrequested) VALUES (%d, %d, %d, '%s', %d);", esql.current_user.userid(), warehouse_id, store_id, product_name, quantity);
+			esql.executeUpdate(query);
+
+			// Update product info and product update table
+			query = String.format("UPDATE product SET numberofunits = numberofunits + %d WHERE storeid = %d AND productname = '%s';", quantity, store_id, product_name);
+			esql.executeUpdate(query);
+			query = String.format("INSERT INTO productupdates (managerid, storeid, productname, updatedon) VALUES (%d, %d, '%s', NOW());", esql.current_user.userid(), store_id, product_name);
+			esql.executeUpdate(query);
+			System.out.println("Supply request successfully placed");
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
 
 }//end Retail
 
