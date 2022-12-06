@@ -267,6 +267,8 @@ public class Retail {
 				while(esql.current_user != null) {
 					if(esql.current_user.type().equals("manager")) {
 						managerOptions(esql);
+					} else if(esql.current_user.type().equals("admin")) {
+						adminOptions(esql);
 					} else {
 						userOptions(esql);
 					}
@@ -350,6 +352,27 @@ public class Retail {
 			case 2: viewProducts(esql); break;
 			case 3: placeOrder(esql); break;
 			case 4: viewRecentOrders(esql); break;
+			case 20: esql.current_user = null; break;
+			default : System.out.println("Unrecognized choice!"); break;
+		}
+	}
+
+
+	public static void adminOptions(Retail esql) {
+		System.out.println("MAIN MENU");
+		System.out.println("---------");
+		System.out.println("1. View User Data");
+		System.out.println("2. View Product Data");
+		System.out.println("3. Update User Data");
+		System.out.println("4. Update Product Data");
+		System.out.println(".........................");
+		System.out.println("20. Log out");
+
+		switch (readChoice()){
+			case 1: viewUserData(esql); break;
+			case 2: viewProductData(esql); break;
+			case 3: updateUserData(esql); break;
+			case 4: updateProductData(esql); break;
 			case 20: esql.current_user = null; break;
 			default : System.out.println("Unrecognized choice!"); break;
 		}
@@ -440,6 +463,8 @@ public class Retail {
 				esql.current_user.setType(user_data.get(0).get(1));
 				esql.current_user.setLatitude(Double.parseDouble(user_data.get(0).get(2)));
 				esql.current_user.setLongitude(Double.parseDouble(user_data.get(0).get(3)));
+			} else {
+				System.out.println("Username / Password login not found");
 			}
 		}catch(Exception e){
 			System.err.println (e.getMessage ());
@@ -825,5 +850,199 @@ public class Retail {
 		}
 	}
 
+	public static void viewUserData(Retail esql) {
+		try {
+			// Get choice
+			System.out.printf("1.) View All Users\n2.) Search User By ID\n3.) Search User By Name\n");
+			System.out.print("Choice: ");
+			int choice = Integer.parseInt(in.readLine());
+
+			// Construct query
+			String query = "";
+			if(choice == 1) {
+				query = "SELECT * FROM users;";
+			} else if(choice == 2) {
+				System.out.print("Enter User ID: ");
+				int user_id = Integer.parseInt(in.readLine());
+				query = String.format("SELECT * FROM users WHERE userid = %d;", user_id);
+			} else if(choice == 3) {
+				System.out.print("Enter User Name: ");
+				String name = in.readLine();
+				query = String.format("SELECT * FROM users WHERE name = '%s';", name);
+			}
+
+			// Execute and display results
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			for(List<String> user : result) {
+				System.out.printf("userid: %s\n", user.get(0));
+				System.out.printf("name: %s\n", user.get(1));
+				System.out.printf("password: %s\n", user.get(2));
+				System.out.printf("latitude: %s\n", user.get(3));
+				System.out.printf("longitude: %s\n", user.get(4));
+				System.out.printf("type: %s\n\n", user.get(5));
+			}
+			if(result.size() < 1) {
+				System.out.println("No Users Found");
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	public static void viewProductData(Retail esql) {
+		try {
+			// Get choice
+			System.out.printf("1.) View All Products\n2.) Search Product By Store ID\n3.) Search Product By Store ID / Name\n4.) Search Product By Name\n");
+			System.out.print("Choice: ");
+			int choice = Integer.parseInt(in.readLine());
+
+			// Construct query
+			String query = "";
+			if(choice == 1) {
+				query = "SELECT * FROM product;";
+			} else if(choice == 2) {
+				System.out.print("Enter Store ID: ");
+				int store_id = Integer.parseInt(in.readLine());
+				query = String.format("SELECT * FROM product WHERE storeid = %d;", store_id);
+			} else if(choice == 3) {
+				System.out.print("Enter Store ID: ");
+				int store_id = Integer.parseInt(in.readLine());
+				System.out.print("Enter Product Name: ");
+				String name = in.readLine();
+				query = String.format("SELECT * FROM product WHERE storeid = %d AND productname = '%s';", store_id, name);
+			} else if(choice == 4) {
+				System.out.print("Enter Product Name: ");
+				String name = in.readLine();
+				query = String.format("SELECT * FROM product WHERE productname = '%s';", name);
+			}
+
+			// Execute and display results
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			for(List<String> product : result) {
+				System.out.printf("storeid: %s\n", product.get(0));
+				System.out.printf("productname: %s\n", product.get(1));
+				System.out.printf("numberofunits: %s\n", product.get(2));
+				System.out.printf("priceperunit: %s\n\n", product.get(3));
+			}
+			if(result.size() < 1) {
+				System.out.println("No Products Found");
+			}
+		} catch(Exception e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	public static void updateUserData(Retail esql) {
+		try {
+			System.out.print("Enter User ID: ");
+			int user_id = Integer.parseInt(in.readLine());
+
+			// Check if user exists
+			String query = String.format("SELECT * FROM users WHERE userid = %d;", user_id);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			if(result.size() < 1) {
+				System.out.printf("User with id #%d not found\n", user_id);
+				return;
+			}
+			List<String> user = result.get(0);
+
+			// Get updated info
+			System.out.println("\nCurrent Info");
+			System.out.printf("name: %s\n", user.get(1));
+			System.out.printf("password: %s\n", user.get(2));
+			System.out.printf("latitude: %s\n", user.get(3));
+			System.out.printf("longitude: %s\n", user.get(4));
+			System.out.printf("type: %s\n\n", user.get(5));
+
+			System.out.print("Enter name (empty string to keep old value): ");
+			String name = in.readLine().trim();
+			System.out.print("Enter password (empty string to keep old value): ");
+			String password = in.readLine().trim();
+			System.out.print("Enter latitude (-1 for to keep old value): ");
+			double latitude = Double.parseDouble(in.readLine());
+			System.out.print("Enter longitude (-1 for to keep old value): ");
+			double longitude = Double.parseDouble(in.readLine());
+			System.out.print("Enter type (empty string to keep old value): ");
+			String type = in.readLine().trim();
+
+			// Validate data
+			if(name.isEmpty()) {
+				name = user.get(1);
+			}
+			if(password.isEmpty()) {
+				password = user.get(2);
+			}
+			if(latitude < 0) {
+				latitude = Double.parseDouble(user.get(3));
+			} else if(latitude > 100) {
+				System.out.printf("Invalid latitude %f. Must be in range [0, 100]\n", latitude);
+				return;
+			}
+			if(longitude < 0) {
+				longitude = Double.parseDouble(user.get(4));
+			} else if(longitude > 100) {
+				System.out.printf("Invalid longitude %f. Must be in range [0, 100]\n", longitude);
+				return;
+			}
+			if(type.isEmpty()) {
+				type = user.get(5);
+			} else if(!(type.equals("customer") || type.equals("manager") || type.equals("admin"))) {
+				System.out.printf("Invalid type '%s'. Must be either customer, manager, or admin\n", type);
+				return;
+			}
+
+			// Update user
+			query = String.format("UPDATE users SET name='%s', password='%s', latitude=%f, longitude=%f, type='%s' WHERE userid=%d;", name, password, latitude, longitude, type, user_id);
+			esql.executeUpdate(query);
+			System.out.println("Successfully Updated User\n");
+		} catch(Exception e) {
+			System.err.println("ERROR IN DATA INPUT: " + e.getMessage());
+		}
+	}
+
+	public static void updateProductData(Retail esql) {
+		try {
+			System.out.print("Enter Store ID: ");
+			int store_id = Integer.parseInt(in.readLine());
+			System.out.print("Enter Product Name: ");
+			String product_name = in.readLine();
+
+			// Check if product exists
+			String query = String.format("SELECT * FROM product WHERE storeid=%d AND productname='%s';", store_id, product_name);
+			List<List<String>> result = esql.executeQueryAndReturnResult(query);
+			if(result.size() < 1) {
+				System.out.printf("Product '%s' in store #%d not found\n", product_name, store_id);
+				return;
+			}
+			List<String> product = result.get(0);
+
+			// Get updated info
+			System.out.println("\nCurrent Info");
+			System.out.printf("storeid: %s\n", product.get(0));
+			System.out.printf("productname: %s\n", product.get(1));
+			System.out.printf("numberofunits: %s\n", product.get(2));
+			System.out.printf("priceperunit: %s\n", product.get(3));
+
+			System.out.print("Enter numberofunits (-1 for to keep old value): ");
+			int number_of_units = Integer.parseInt(in.readLine());
+			System.out.print("Enter priceperunit (-1 for to keep old value): ");
+			double price_per_unit = Double.parseDouble(in.readLine());
+
+			// Validate data
+			if(number_of_units < 0) {
+				number_of_units = Integer.parseInt(product.get(2));
+			}
+			if(price_per_unit < 0) {
+				price_per_unit = Double.parseDouble(product.get(3));
+			}
+
+			// Update Product
+			query = String.format("UPDATE product SET numberofunits=%d, priceperunit=%f WHERE storeid=%d AND productname='%s';", number_of_units, price_per_unit, store_id, product_name);
+			esql.executeUpdate(query);
+			System.out.println("Successfully Updated Product\n");
+		} catch(Exception e) {
+			System.err.println("ERROR IN DATA INPUT: " + e.getMessage());
+		}
+	}
 }//end Retail
 
