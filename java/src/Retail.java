@@ -817,6 +817,12 @@ public class Retail {
 				return;
 			}
 
+			// Check if manages store
+			if(esql.executeQuery(String.format("SELECT * FROM store where storeid = %d AND managerid = %d;", store_id, esql.current_user.userid())) == 0) {
+				System.out.printf("Manager #%d does not manage store #%d. You cannot request an order to this store, fool\n", esql.current_user.userid(), store_id);
+				return;
+			}
+
 			// Check if product exists in store
 			if(esql.executeQuery(String.format("SELECT * FROM product WHERE storeid = %d AND productname = '%s';", store_id, product_name)) == 0) {
 				System.out.printf("Product '%s' is not carried at store #%d\n", product_name, store_id);
